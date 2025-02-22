@@ -10,7 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from databases import Database
 
-DATABASE_URL = "postgresql://users_m3y4_user:iknKw3tw6VblFtKmv3voE3x9bh1CFXnT@dpg-custu6rqf0us739p7edg-a.frankfurt-postgres.render.com/users_m3y4" 
+DATABASE_URL = "postgresql://users_m3y4_user:iknKw3tw6VblFtKmv3voE3x9bh1CFXnT@dpg-custu6rqf0us739p7edg-a/users_m3y4" 
 
 SECRET_KEY = "b18a7e6fe1a7ed5446f9614ccb1c89a8da126d066ee72960bcba51f58ef150b7"
 ALGORITHM = "HS256"
