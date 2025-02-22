@@ -9,12 +9,15 @@ from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from databases import Database
+import os 
+from dotenv import load_dotenv
+# DATABASE_URL="" 
+load_dotenv()
 
-DATABASE_URL = "postgresql://users_m3y4_user:iknKw3tw6VblFtKmv3voE3x9bh1CFXnT@dpg-custu6rqf0us739p7edg-a/users_m3y4" 
-
-SECRET_KEY = "b18a7e6fe1a7ed5446f9614ccb1c89a8da126d066ee72960bcba51f58ef150b7"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = os.getenv("SECRET_KEY")
+DATABASE_URL = os.getenv("DATABASE_URL")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 
 
