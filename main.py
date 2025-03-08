@@ -231,7 +231,13 @@ logger = logging.getLogger("uvicorn.error")
 async def read_users_me(current_user: UserDB = Depends(get_current_user)):
     logger.info(f"Fetching user data for: {current_user.username}")
     try:
-        return current_user
+        return User(
+        id=current_user.id,
+        username=current_user.username,
+        email=current_user.email,
+        full_name=current_user.full_name,
+        disabled=current_user.disabled
+    )
     except Exception as e:
         logger.error(f"Error fetching user: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
