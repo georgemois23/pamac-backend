@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from datetime import datetime, timedelta, timezone
@@ -9,14 +9,25 @@ from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.orm import sessionmaker, Session, declarative_base  # Updated import
 import os
 from dotenv import load_dotenv
+from fastapi.security.api_key import APIKeyHeader
 
 # Φόρτωση .env αρχείου
 load_dotenv()
+
+IS_LOCAL = os.getenv("ENV") == "local"
+
+
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
+
+async def check_api_key(api_key: str = Security(api_key_header)):
+    if api_key != "your-secure-api-key":
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
 # Ρύθμιση σύνδεσης με τη βάση δεδομένων
 engine = create_engine(DATABASE_URL)
@@ -40,7 +51,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # FastAPI app
-app = FastAPI()
+app = FastAPI(
+    docs_url="/docs" if IS_LOCAL else None,  # Disable in production
+    redoc_url="/redoc" if IS_LOCAL else None
+)
 
 # CORS Middleware
 app.add_middleware(
