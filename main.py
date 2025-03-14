@@ -1,3 +1,4 @@
+from jose.exceptions import JWTError
 from fastapi import Depends, FastAPI, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -50,6 +51,32 @@ Base.metadata.create_all(bind=engine)
 # Ρυθμίσεις ασφαλείας
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def ping_server():
+    try:
+        with httpx.Client() as client:
+            response = client.get("https://pamac-backendd.onrender.com/ping")
+            print("Ping response:", response.status_code)
+    except Exception as e:
+        print("Ping failed:", e)
+
+# Set ping interval to 14 minutes
+schedule.every(14).minutes.do(ping_server)
+
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+
+# Use the new `lifespan` method
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    thread = threading.Thread(target=run_scheduler, daemon=True)
+    thread.start()
+    yield  # Continue app startup
+    # Cleanup code can go here if needed
+
 
 # FastAPI app
 app = FastAPI(
@@ -135,29 +162,6 @@ class User(BaseModel):
         from_attributes = True  # Changed to match Pydantic V2
 
 
-def ping_server():
-    try:
-        with httpx.Client() as client:
-            response = client.get("https://pamac-backendd.onrender.com/ping")
-            print("Ping response:", response.status_code)
-    except Exception as e:
-        print("Ping failed:", e)
-
-# Set ping interval to 14 minutes
-schedule.every(14).minutes.do(ping_server)
-
-def run_scheduler():
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
-
-# Use the new `lifespan` method
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    thread = threading.Thread(target=run_scheduler, daemon=True)
-    thread.start()
-    yield  # Continue app startup
-    # Cleanup code can go here if needed
 
 @app.get("/ping")
 async def ping():
