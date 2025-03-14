@@ -1,4 +1,3 @@
-from jose.exceptions import JWTError
 from fastapi import Depends, FastAPI, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
