@@ -10,12 +10,18 @@ from sqlalchemy.orm import sessionmaker, Session, declarative_base  # Updated im
 import os
 from dotenv import load_dotenv
 from fastapi.security.api_key import APIKeyHeader
+import schedule
+import time
+import threading
+import httpx
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
 
 # Φόρτωση .env αρχείου
 load_dotenv()
 
 IS_LOCAL = os.getenv("ENV") == "local"
-
+print("ENV:", os.getenv("ENV"))
 
 
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -23,11 +29,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
-api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
-
-async def check_api_key(api_key: str = Security(api_key_header)):
-    if api_key != "your-secure-api-key":
-        raise HTTPException(status_code=403, detail="Unauthorized")
 
 # Ρύθμιση σύνδεσης με τη βάση δεδομένων
 engine = create_engine(DATABASE_URL)
@@ -52,6 +53,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # FastAPI app
 app = FastAPI(
+    lifespan=lifespan,
     docs_url="/docs" if IS_LOCAL else None,  # Disable in production
     redoc_url="/redoc" if IS_LOCAL else None
 )
@@ -131,6 +133,36 @@ class User(BaseModel):
 
     class Config:
         from_attributes = True  # Changed to match Pydantic V2
+
+
+def ping_server():
+    try:
+        with httpx.Client() as client:
+            response = client.get("https://pamac-backendd.onrender.com/ping")
+            print("Ping response:", response.status_code)
+    except Exception as e:
+        print("Ping failed:", e)
+
+# Set ping interval to 14 minutes
+schedule.every(14).minutes.do(ping_server)
+
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+
+# Use the new `lifespan` method
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    thread = threading.Thread(target=run_scheduler, daemon=True)
+    thread.start()
+    yield  # Continue app startup
+    # Cleanup code can go here if needed
+
+@app.get("/ping")
+async def ping():
+    return {"status": "alive"}
+
 
 # Routes
 @app.get("/test")
