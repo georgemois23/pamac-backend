@@ -89,8 +89,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Keep localhost for local development
-        "https://pamac.moysiadis.codes"  # Add your deployed frontend URL
-        "https://pamac.moysiadis.dev/"
+        "https://pamac.moysiadis.codes",  # Add your deployed frontend URL
+        "https://pamac.moysiadis.dev"
     ],
     allow_credentials=True,
     allow_methods=["*"],
