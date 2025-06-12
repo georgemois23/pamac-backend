@@ -162,7 +162,10 @@ class User(BaseModel):
         from_attributes = True  # Changed to match Pydantic V2
 
 
-
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the PAMAC backend API!"}
+    
 @app.get("/ping")
 async def ping():
     return {"status": "alive"}
