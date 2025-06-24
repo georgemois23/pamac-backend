@@ -98,8 +98,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Keep localhost for local development
-        "https://pamac.moysiadis.codes",  # Add your deployed frontend URL
-        "https://pamac.moysiadis.dev/"
+        "https://pamac.moysiadis.codes"  # Add your deployed frontend URL
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -211,7 +210,10 @@ class User(BaseModel):
         from_attributes = True  # Changed to match Pydantic V2
 
 
-
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the PAMAC backend API!"}
+    
 @app.get("/ping")
 async def ping():
     return {"status": "alive"}
