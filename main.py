@@ -16,10 +16,6 @@ import threading
 import httpx
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from supabase import create_client, Client
-
-# run it with this command <python -m uvicorn main:app --reload --host 0.0.0.0 --port 8080>
-
 
 # Φόρτωση .env αρχείου
 load_dotenv()
@@ -28,20 +24,16 @@ IS_LOCAL = os.getenv("ENV") == "local"
 print("ENV:", os.getenv("ENV"))
 
 
-
 SECRET_KEY = os.getenv("SECRET_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
-print("DATABASE_URL:", DATABASE_URL)
-print("SECRET_KEY:", SECRET_KEY)
+
 # Ρύθμιση σύνδεσης με τη βάση δεδομένων
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()  # No change here, but import is fixed
-
-
 
 # Ορισμός User Model για τη βάση δεδομένων
 class UserDB(Base):
@@ -60,6 +52,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
+def ping_database():
+    try:
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        print("Database ping successful")
+    except Exception as e:
+        print("Database ping failed:", e)
+    finally:
+        db.close()
+
 def ping_server():
     try:
         with httpx.Client() as client:
@@ -70,7 +72,7 @@ def ping_server():
 
 # Set ping interval to 14 minutes
 schedule.every(14).minutes.do(ping_server)
-schedule.every(4).minutes.do(ping_database)
+schedule.every(14).minutes.do(ping_database)
 
 def run_scheduler():
     while True:
@@ -98,42 +100,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Keep localhost for local development
-        "https://pamac.moysiadis.codes"  # Add your deployed frontend URL
+        "https://pamac.moysiadis.codes",  # Add your deployed frontend URL
+        "https://pamac.moysiadis.dev"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class EmailRequest(BaseModel):
-    email: str
-
-@app.post("/reset-password")
-async def reset_password(email: str):
-    response = engine.auth.api.reset_password_for_email(email)
-
-    if response.get("error"):
-        raise HTTPException(status_code=400, detail="Error sending reset email")
-
-    return {"message": "Password reset email sent"}
-
-
-
-@app.post("/update-password")
-async def update_password(new_password: str, access_token: str):
-    headers = {"Authorization": f"Bearer {access_token}", "apikey": SECRET_KEY}
-    
-    response = engine.auth.update_user(
-        {"password": new_password},
-        headers=headers
-    )
-
-    if response.get("error"):
-        raise HTTPException(status_code=400, detail=f"Error: {response['error']['message']}")
-
-    return {"message": "Password updated successfully"}
-
 
 # Utility functions
 def verify_password(plain_password, hashed_password):
@@ -161,16 +134,6 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
-    finally:
-        db.close()
-
-def ping_database():
-    try:
-        db = SessionLocal()
-        db.execute(text("SELECT 1"))  # Lightweight query
-        print("Supabase DB ping successful.")
-    except Exception as e:
-        print("Supabase DB ping failed:", e)
     finally:
         db.close()
 
