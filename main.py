@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from passlib.context import CryptContext
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, Boolean,text
 from sqlalchemy.orm import sessionmaker, Session, declarative_base  # Updated import
 import os
 from dotenv import load_dotenv
@@ -55,7 +55,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 def ping_database():
     try:
         db = SessionLocal()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         print("Database ping successful")
     except Exception as e:
         print("Database ping failed:", e)
